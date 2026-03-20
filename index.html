@@ -1,515 +1,424 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>ระบบเฝ้าระวังไฟไหม้และแก๊สรั่ว</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<style>
-:root {
-  --bg:        #f4f6fa;
-  --surface:   #ffffff;
-  --border:    #dde3ee;
-  --navy:      #0d1b3e;
-  --navy2:     #1a3260;
-  --blue:      #1e4db7;
-  --blue-lt:   #e8eef9;
-  --green:     #0a8a4f;
-  --green-lt:  #e4f5ed;
-  --red:       #c0392b;
-  --red-lt:    #fdecea;
-  --amber:     #b45309;
-  --amber-lt:  #fef3e2;
-  --text:      #1a2540;
-  --text2:     #4a5678;
-  --text3:     #8a94aa;
-  --mono:      'IBM Plex Mono', monospace;
-  --sans:      'IBM Plex Sans Thai', sans-serif;
-  --radius:    12px;
-  --shadow:    0 2px 12px rgba(13,27,62,0.08);
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire & Gas Monitoring Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #0b1120; /* Dark background */
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-body {
-  background: var(--bg);
-  font-family: var(--sans);
-  min-height: 100vh;
-  color: var(--text);
-}
+        /* Neon Text Styles */
+        .neon-text-blue { text-shadow: 0 0 10px rgba(14, 165, 233, 0.8); }
+        .neon-text-purple { text-shadow: 0 0 10px rgba(168, 85, 247, 0.8); }
+        .neon-text-pink { text-shadow: 0 0 10px rgba(236, 72, 153, 0.8); }
+        .neon-text-red { text-shadow: 0 0 10px rgba(239, 68, 68, 0.😎, 0 0 20px rgba(239, 68, 68, 0.4); }
 
-/* ===== HEADER ===== */
-.header {
-  background: var(--navy);
-  padding: 0 24px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky; top: 0; z-index: 20;
-  box-shadow: 0 2px 16px rgba(13,27,62,0.3);
-}
+        /* Neon Box Styles (Glassmorphism) */
+        .neon-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #1e293b;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+        .neon-box:hover {
+            border-color: #334155;
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.15);
+        }
 
-.header-brand { display: flex; align-items: center; gap: 12px; }
+        /* --- Dark Neon Arc Gauge --- */
+        .gauge-container {
+            width: 140px;
+            height: 140px;
+            position: relative;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .gauge-ring {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 225deg, #1e293b 0deg, #1e293b 270deg, transparent 270deg); /* Dark track */
+            -webkit-mask: radial-gradient(transparent 55%, black 56%);
+            mask: radial-gradient(transparent 55%, black 56%);
+            transition: background 0.5s ease;
+        }
+        .gauge-value-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
 
-.header-logo {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, #1e4db7, #3b6fd4);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  box-shadow: 0 2px 8px rgba(30,77,183,0.5);
-}
+        /* Stepper Button Hover */
+        .stepper-btn {
+            transition: all 0.2s;
+        }
+        .stepper-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .stepper-btn:active {
+            transform: scale(0.9);
+        }
 
-.header-title { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: 0.3px; }
-.header-subtitle { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; font-family: var(--mono); letter-spacing: 0.5px; }
+        /* Neon LED Styles */
+        .led-green-on {
+            background-color: #22c55e;
+            box-shadow: 0 0 15px #22c55e, inset 0 0 5px rgba(255,255,255,0.8);
+            border: 2px solid #4ade80;
+        }
+        .led-red-on {
+            background-color: #ef4444;
+            box-shadow: 0 0 20px #ef4444, inset 0 0 5px rgba(255,255,255,0.8);
+            border: 2px solid #f87171;
+            animation: pulse-red 1s infinite alternate;
+        }
+        .led-off {
+            background-color: transparent;
+            border: 2px solid #334155;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.5);
+        }
 
-.header-right { display: flex; align-items: center; gap: 14px; }
+        @keyframes pulse-red {
+            from { box-shadow: 0 0 10px #ef4444; }
+            to { box-shadow: 0 0 25px #ef4444, 0 0 40px #ef4444; }
+        }
 
-.status-pill {
-  display: flex; align-items: center; gap: 7px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 999px;
-  padding: 5px 14px;
-  font-size: 12px; font-weight: 500; color: #fff;
-  font-family: var(--mono);
-  transition: all 0.3s;
-}
-.status-pill.danger { background: rgba(192,57,43,0.22); border-color: rgba(192,57,43,0.45); }
-
-.status-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: #2ecc71; box-shadow: 0 0 8px #2ecc71;
-  transition: all 0.3s;
-}
-.status-dot.danger { background: #e74c3c; box-shadow: 0 0 8px #e74c3c; animation: blink 0.7s step-end infinite; }
-@keyframes blink { 50% { opacity: 0; } }
-
-.header-clock { font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.35); }
-
-/* ===== PAGE ===== */
-.page { max-width: 560px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
-
-/* ===== CARD ===== */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 13px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-
-.card-title { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: 0.9px; text-transform: uppercase; }
-
-.card-badge {
-  font-family: var(--mono); font-size: 10px;
-  padding: 3px 10px; border-radius: 999px;
-  border: 1px solid var(--border); color: var(--text3);
-  letter-spacing: 0.5px; transition: all 0.3s;
-}
-.card-badge.alarm { border-color: rgba(192,57,43,0.35); background: var(--red-lt); color: var(--red); }
-.card-badge.ok    { border-color: rgba(10,138,79,0.35);  background: var(--green-lt); color: var(--green); }
-
-.card-body { padding: 20px; }
-
-/* ===== GAUGES ===== */
-.gauge-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-
-.gauge-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-
-.gauge-tag { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 1px; }
-
-.gauge-ring { position: relative; width: 110px; height: 66px; }
-.gauge-ring svg { width: 110px; height: 110px; position: absolute; top: 0; left: 0; overflow: visible; }
-
-.gauge-val {
-  position: absolute; top: 14px; left: 0; right: 0;
-  text-align: center;
-  font-family: var(--mono); font-size: 21px; font-weight: 500; line-height: 1;
-}
-.gauge-val sub { font-size: 11px; color: var(--text3); font-weight: 400; vertical-align: 0; }
-
-.gauge-scale {
-  display: flex; justify-content: space-between; width: 110px;
-  font-family: var(--mono); font-size: 9px; color: var(--text3);
-}
-
-.gauge-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--border);
-  transition: background 0.3s, box-shadow 0.3s;
-}
-
-/* ===== THRESHOLD ===== */
-.thresh-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-
-.thresh-item { display: flex; flex-direction: column; gap: 8px; }
-.thresh-tag { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 1px; text-align: center; }
-
-.thresh-ctrl {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  display: flex; align-items: center; overflow: hidden;
-}
-.thresh-btn {
-  background: none; border: none; width: 30px; height: 36px;
-  font-size: 17px; color: var(--text2); cursor: pointer;
-  transition: background 0.15s;
-  display: flex; align-items: center; justify-content: center;
-}
-.thresh-btn:hover  { background: var(--border); }
-.thresh-btn:active { background: var(--blue-lt); }
-
-.thresh-num { flex:1; text-align:center; font-family:var(--mono); font-size:12px; font-weight:500; color:var(--text); }
-
-.thresh-leds { display: flex; gap: 8px; justify-content: center; }
-.t-led {
-  width: 22px; height: 22px; border-radius: 50%;
-  border: 1.5px solid var(--border); background: var(--bg);
-  transition: all 0.3s;
-}
-.t-led.g { background: radial-gradient(circle at 35% 35%, #4ade80, #16a34a); border-color: #16a34a; box-shadow: 0 0 7px rgba(22,163,74,0.5); }
-.t-led.r { background: radial-gradient(circle at 35% 35%, #f87171, #dc2626); border-color: #dc2626; box-shadow: 0 0 7px rgba(220,38,38,0.5); animation: blink 0.6s step-end infinite; }
-
-/* ===== FLAME ===== */
-.flame-inner {
-  display: flex; align-items: center; justify-content: space-around; padding: 22px 20px;
-}
-
-.flame-block { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-
-.flame-circle {
-  width: 70px; height: 70px; border-radius: 50%;
-  border: 2px solid var(--border); background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 30px; transition: all 0.3s;
-}
-.flame-circle.active {
-  background: var(--red-lt); border-color: rgba(192,57,43,0.4);
-  animation: fpulse 1.2s ease-in-out infinite;
-}
-@keyframes fpulse {
-  0%,100% { box-shadow: 0 0 14px rgba(192,57,43,0.2); }
-  50%      { box-shadow: 0 0 28px rgba(192,57,43,0.45); }
-}
-
-.flame-lbl { font-size: 12px; font-weight: 500; color: var(--text2); }
-
-.f-leds-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.f-leds-tag { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.5px; }
-.f-leds { display: flex; gap: 14px; }
-.f-led {
-  width: 44px; height: 44px; border-radius: 50%;
-  border: 2px solid var(--border); background: var(--bg); transition: all 0.3s;
-}
-.f-led.g { background: radial-gradient(circle at 35% 35%, #4ade80, #16a34a); border-color: #16a34a; box-shadow: 0 0 12px rgba(22,163,74,0.5); }
-.f-led.r { background: radial-gradient(circle at 35% 35%, #f87171, #dc2626); border-color: #dc2626; box-shadow: 0 0 12px rgba(220,38,38,0.5); animation: blink 0.6s step-end infinite; }
-
-/* ===== ALERT ===== */
-.alert-bar {
-  display: none;
-  background: var(--red-lt); border: 1px solid rgba(192,57,43,0.25);
-  border-radius: var(--radius); padding: 14px 18px;
-  flex-direction: row; align-items: center; gap: 14px;
-}
-.alert-bar.show { display: flex; }
-.alert-bar strong { display: block; font-size: 14px; font-weight: 600; color: var(--red); }
-.alert-bar span   { font-size: 12px; color: #7f1d1d; }
-
-/* ===== CONTROLS ===== */
-.ctrl-row { display: flex; gap: 10px; }
-.ctrl-btn {
-  flex: 1; height: 44px;
-  border: 1.5px solid var(--border); border-radius: 8px;
-  background: var(--surface); font-family: var(--sans);
-  font-size: 13px; font-weight: 600; color: var(--text2);
-  cursor: pointer; transition: all 0.18s; letter-spacing: 0.3px;
-}
-.ctrl-btn:hover    { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
-.ctrl-btn.primary  { background: var(--navy); border-color: var(--navy); color: #fff; }
-.ctrl-btn.primary:hover { background: var(--navy2); }
-.ctrl-btn.danger   { background: var(--red); border-color: var(--red); color: #fff; }
-.ctrl-btn.danger:hover  { background: #a93226; }
-
-/* ===== FOOTER ===== */
-.footer { text-align: center; font-family: var(--mono); font-size: 10px; color: var(--text3); padding-top: 4px; letter-spacing: 0.5px; }
-</style>
+        /* Fire Banner Alert State */
+        .banner-alert {
+            border-color: #ef4444;
+            background: rgba(127, 29, 29, 0.3);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen p-4 md:p-8">
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-brand">
-    <div class="header-logo">🛡️</div>
-    <div>
-      <div class="header-title">ระบบเฝ้าระวังไฟไหม้และแก๊สรั่ว</div>
-      <div class="header-subtitle">IoT MONITORING — ESP32 + MQ-2 ×3 + FLAME SENSOR</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <div class="status-pill" id="statusPill">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusTxt">ปกติ</span>
-    </div>
-    <div class="header-clock" id="clock"></div>
-  </div>
-</div>
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <header class="text-center py-4 md:py-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 tracking-wide neon-text-blue">
+                <i class="fa-solid fa-shield-halved text-blue-400 mr-2"></i> ระบบเฝ้าระวังควันและไฟไหม้
+            </h1>
+            <p class="text-gray-400">MQ-2 Smart IoT Dashboard</p>
+        </header>
 
-<div class="page">
+        <!-- Sensors Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Sensor 1 (MQ1) -->
+            <div class="neon-box rounded-2xl p-6 flex flex-col items-center">
+                <h3 class="text-xl font-medium text-gray-200 mb-6 tracking-wider">MQ-1</h3>
+                
+                <!-- Gauge V0 -->
+                <div class="gauge-container mb-6">
+                    <div id="ring-v0" class="gauge-ring" style="background: conic-gradient(from 225deg, #0ea5e9 0%, #1e293b 0%, #1e293b 270deg, transparent 270deg);"></div>
+                    <div class="gauge-value-text">
+                        <span class="text-3xl font-bold text-[#0ea5e9] neon-text-blue">
+                            <span id="val-v0">0</span>
+                        </span>
+                        <span class="text-xs text-blue-300 mt-1">Raw Value</span>
+                    </div>
+                </div>
 
-  <!-- ALERT BAR -->
-  <div class="alert-bar" id="alertBar">
-    <span style="font-size:22px">⚠️</span>
-    <div>
-      <strong>ตรวจพบสัญญาณผิดปกติ</strong>
-      <span>ค่าเซ็นเซอร์เกินค่าเกณฑ์ที่กำหนด — กรุณาตรวจสอบทันที</span>
-    </div>
-  </div>
+                <div class="w-full border-t border-slate-700 my-4"></div>
 
-  <!-- GAS CARD -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">เซ็นเซอร์แก๊ส MQ-2</div>
-      <div class="card-badge" id="gasBadge">STANDBY</div>
-    </div>
-    <div class="card-body">
-      <div class="gauge-row">
+                <!-- Stepper V11 -->
+                <div class="w-full mb-6">
+                    <p class="text-xs text-gray-400 text-center mb-2">Threshold (V11)</p>
+                    <div class="flex items-center justify-between bg-[#0f172a] rounded-lg p-2 border border-slate-700">
+                        <button onclick="updateThreshold('V11', -50, 'lbl-v11')" class="stepper-btn text-gray-400 hover:text-white px-4 py-1 text-xl rounded"><i class="fa-solid fa-minus"></i></button>
+                        <span class="text-lg font-medium text-gray-200"><span id="lbl-v11">1500</span></span>
+                        <button onclick="updateThreshold('V11', 50, 'lbl-v11')" class="stepper-btn text-gray-400 hover:text-white px-4 py-1 text-xl rounded"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
 
-        <div class="gauge-item">
-          <div class="gauge-tag">MQ-1</div>
-          <div class="gauge-ring">
-            <svg viewBox="0 0 110 110">
-              <path d="M10,90 A48,48 0 0,1 100,90" fill="none" stroke="#e8eef9" stroke-width="10" stroke-linecap="round"/>
-              <path id="arc1" d="M10,90 A48,48 0 0,1 100,90" fill="none" stroke="#1e4db7" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 151" style="transition:stroke-dasharray 0.5s,stroke 0.3s;"/>
-            </svg>
-            <div class="gauge-val" id="gv1" style="color:#1e4db7">0<sub>%</sub></div>
-          </div>
-          <div class="gauge-scale"><span>0</span><span>5000</span></div>
-          <div class="gauge-dot" id="gd1"></div>
+                <!-- LEDs V5, V6 -->
+                <div class="flex gap-4 justify-center w-full">
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v5" class="w-6 h-6 rounded-full led-green-on"></div>
+                        <span class="text-[10px] text-gray-500">ปกติ</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v6" class="w-6 h-6 rounded-full led-off"></div>
+                        <span class="text-[10px] text-gray-500">พบแก๊ส</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensor 2 (MQ2) -->
+            <div class="neon-box rounded-2xl p-6 flex flex-col items-center">
+                <h3 class="text-xl font-medium text-gray-200 mb-6 tracking-wider">MQ-2</h3>
+                
+                <!-- Gauge V1 -->
+                <div class="gauge-container mb-6">
+                    <div id="ring-v1" class="gauge-ring" style="background: conic-gradient(from 225deg, #a855f7 0%, #1e293b 0%, #1e293b 270deg, transparent 270deg);"></div>
+                    <div class="gauge-value-text">
+                        <span class="text-3xl font-bold text-[#a855f7] neon-text-purple">
+                            <span id="val-v1">0</span>
+                        </span>
+                        <span class="text-xs text-purple-300 mt-1">Raw Value</span>
+                    </div>
+                </div>
+
+                <div class="w-full border-t border-slate-700 my-4"></div>
+
+                <!-- Stepper V12 -->
+                <div class="w-full mb-6">
+                    <p class="text-xs text-gray-400 text-center mb-2">Threshold (V12)</p>
+                    <div class="flex items-center justify-between bg-[#0f172a] rounded-lg p-2 border border-slate-700">
+                        <button onclick="updateThreshold('V12', -50, 'lbl-v12')" class="stepper-btn text-gray-400 hover:text-white px-4 py-1 text-xl rounded"><i class="fa-solid fa-minus"></i></button>
+                        <span class="text-lg font-medium text-gray-200"><span id="lbl-v12">1500</span></span>
+                        <button onclick="updateThreshold('V12', 50, 'lbl-v12')" class="stepper-btn text-gray-400 hover:text-white px-4 py-1 text-xl rounded"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- LEDs V7, V8 -->
+                <div class="flex gap-4 justify-center w-full">
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v7" class="w-6 h-6 rounded-full led-green-on"></div>
+                        <span class="text-[10px] text-gray-500">ปกติ</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v8" class="w-6 h-6 rounded-full led-off"></div>
+                        <span class="text-[10px] text-gray-500">พบแก๊ส</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensor 3 (MQ3) -->
+            <div class="neon-box rounded-2xl p-6 flex flex-col items-center">
+                <h3 class="text-xl font-medium text-gray-200 mb-6 tracking-wider">MQ-3</h3>
+                
+                <!-- Gauge V2 -->
+                <div class="gauge-container mb-6">
+                    <div id="ring-v2" class="gauge-ring" style="background: conic-gradient(from 225deg, #ec4899 0%, #1e293b 0%, #1e293b 270deg, transparent 270deg);"></div>
+                    <div class="gauge-value-text">
+                        <span class="text-3xl font-bold text-[#ec4899] neon-text-pink">
+                            <span id="val-v2">0</span>
+                        </span>
+                        <span class="text-xs text-pink-300 mt-1">Raw Value</span>
+                    </div>
+                </div>
+
+                <div class="w-full border-t border-slate-700 my-4"></div>
+
+                <!-- Stepper V13 -->
+                <div class="w-full mb-6">
+                    <p class="text-xs text-gray-400 text-center mb-2">Threshold (V13)</p>
+                    <div class="flex items-center justify-between bg-[#0f172a] rounded-lg p-2 border border-slate-700">
+                        <button onclick="updateThreshold('V13', -50, 'lbl-v13')" class="stepper-btn text-gray-400 hover:text-white px-4 py-1 text-xl rounded"><i class="fa-solid fa-minus"></i></button>
+                        <span class="text-lg font-medium text-gray-200"><span id="lbl-v13">1500</span></span>
+                        <button onclick="updateThreshold('V13', 50, 'lbl-v13')" class="stepper-btn text-gray-400 hover:text-white px-4 py-1 text-xl rounded"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- LEDs V9, V10 -->
+                <div class="flex gap-4 justify-center w-full">
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v9" class="w-6 h-6 rounded-full led-green-on"></div>
+                        <span class="text-[10px] text-gray-500">ปกติ</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v10" class="w-6 h-6 rounded-full led-off"></div>
+                        <span class="text-[10px] text-gray-500">พบแก๊ส</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="gauge-item">
-          <div class="gauge-tag">MQ-2</div>
-          <div class="gauge-ring">
-            <svg viewBox="0 0 110 110">
-              <path d="M10,90 A48,48 0 0,1 100,90" fill="none" stroke="#e8eef9" stroke-width="10" stroke-linecap="round"/>
-              <path id="arc2" d="M10,90 A48,48 0 0,1 100,90" fill="none" stroke="#4f46e5" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 151" style="transition:stroke-dasharray 0.5s,stroke 0.3s;"/>
-            </svg>
-            <div class="gauge-val" id="gv2" style="color:#4f46e5">0<sub>%</sub></div>
-          </div>
-          <div class="gauge-scale"><span>0</span><span>5000</span></div>
-          <div class="gauge-dot" id="gd2"></div>
+        <!-- Fire Warning Banner -->
+        <div id="fire-banner" class="neon-box rounded-2xl p-8 mt-8 transition-all duration-500">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                
+                <div class="text-center md:text-left">
+                    <h2 class="text-3xl font-bold text-white mb-2 tracking-wide flex items-center justify-center md:justify-start gap-3">
+                        สถานะเปลวไฟ <i class="fa-solid fa-fire text-orange-500"></i>
+                    </h2>
+                    <p id="fire-text" class="text-gray-400">ระบบเฝ้าระวังกำลังทำงาน ปกติ</p>
+                </div>
+
+                <!-- Fire LEDs (V3, V4) -->
+                <div class="flex gap-6 items-center bg-[#0f172a] px-6 py-4 rounded-xl border border-slate-700">
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v3" class="w-12 h-12 rounded-full led-green-on"></div>
+                        <span class="text-xs text-gray-400 font-medium">ปกติ (V3)</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="led-v4" class="w-12 h-12 rounded-full led-off"></div>
+                        <span class="text-xs text-gray-400 font-medium">ไฟไหม้ (V4)</span>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <div class="gauge-item">
-          <div class="gauge-tag">MQ-3</div>
-          <div class="gauge-ring">
-            <svg viewBox="0 0 110 110">
-              <path d="M10,90 A48,48 0 0,1 100,90" fill="none" stroke="#e8eef9" stroke-width="10" stroke-linecap="round"/>
-              <path id="arc3" d="M10,90 A48,48 0 0,1 100,90" fill="none" stroke="#0891b2" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 151" style="transition:stroke-dasharray 0.5s,stroke 0.3s;"/>
-            </svg>
-            <div class="gauge-val" id="gv3" style="color:#0891b2">0<sub>%</sub></div>
-          </div>
-          <div class="gauge-scale"><span>0</span><span>5000</span></div>
-          <div class="gauge-dot" id="gd3"></div>
+        <!-- Status Footer -->
+        <div class="text-center pb-8 pt-4">
+            <span id="conn-status" class="text-xs bg-slate-800 px-3 py-1 rounded-full text-gray-400 border border-slate-700">
+                <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> กำลังเชื่อมต่อ API...
+            </span>
         </div>
 
-      </div>
     </div>
-  </div>
 
-  <!-- THRESHOLD CARD -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">ค่าเกณฑ์การแจ้งเตือน</div>
-      <div class="card-badge">THRESHOLD</div>
-    </div>
-    <div class="card-body">
-      <div class="thresh-row">
+    <!-- JavaScript Logic -->
+    <script>
+        const BLYNK_AUTH_TOKEN = "Wjexk3qplmjcvmKWPawQ-jRFmmduARwd"; 
+        const BLYNK_SERVER = "https://blynk.cloud/external/api";
 
-        <div class="thresh-item">
-          <div class="thresh-tag">MQ-1</div>
-          <div class="thresh-ctrl">
-            <button class="thresh-btn" onclick="chTh(0,-100)">−</button>
-            <div class="thresh-num"><span id="tv1">1500</span></div>
-            <button class="thresh-btn" onclick="chTh(0,+100)">+</button>
-          </div>
-          <div class="thresh-leds">
-            <div class="t-led g" id="tla1"></div>
-            <div class="t-led"   id="tlb1"></div>
-          </div>
-        </div>
+        const READ_PINS = ['v0', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'v10', 'v11', 'v12', 'v13'];
+        
+        // ฟังก์ชันคำนวณและวาดกราฟโค้ง (Dark Mode version)
+        function updateGauge(pin, rawValue, activeColorHex) {
+            let maxVal = 4095; // อิงจาก AnalogRead ESP32 (12-bit)
+            let val = parseInt(rawValue) || 0;
+            
+            const textEl = document.getElementById(val-${pin.toLowerCase()});
+            if(textEl) textEl.innerText = val;
 
-        <div class="thresh-item">
-          <div class="thresh-tag">MQ-2</div>
-          <div class="thresh-ctrl">
-            <button class="thresh-btn" onclick="chTh(1,-100)">−</button>
-            <div class="thresh-num"><span id="tv2">1500</span></div>
-            <button class="thresh-btn" onclick="chTh(1,+100)">+</button>
-          </div>
-          <div class="thresh-leds">
-            <div class="t-led g" id="tla2"></div>
-            <div class="t-led"   id="tlb2"></div>
-          </div>
-        </div>
+            let percentage = (val / maxVal);
+            if(percentage > 1) percentage = 1;
+            
+            let degrees = percentage * 270;
+            
+            const ringEl = document.getElementById(ring-${pin.toLowerCase()});
+            if(ringEl) {
+                // สีเทรคพื้นหลังแบบ Dark mode คือ #1e293b
+                ringEl.style.background = conic-gradient(from 225deg, ${activeColorHex} 0deg, ${activeColorHex} ${degrees}deg, #1e293b ${degrees}deg, #1e293b 270deg, transparent 270deg);
+                // เพิ่มแสง Glow ให้กราฟ
+                ringEl.style.filter = drop-shadow(0 0 8px ${activeColorHex}80);
+            }
+        }
 
-        <div class="thresh-item">
-          <div class="thresh-tag">MQ-3</div>
-          <div class="thresh-ctrl">
-            <button class="thresh-btn" onclick="chTh(2,-100)">−</button>
-            <div class="thresh-num"><span id="tv3">1500</span></div>
-            <button class="thresh-btn" onclick="chTh(2,+100)">+</button>
-          </div>
-          <div class="thresh-leds">
-            <div class="t-led g" id="tla3"></div>
-            <div class="t-led"   id="tlb3"></div>
-          </div>
-        </div>
+        // ฟังก์ชันอัปเดตไฟ LED
+        function updateLEDStyle(elementId, value, isRedAlert = false) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
 
-      </div>
-    </div>
-  </div>
+            let numVal = parseInt(value);
+            if (numVal > 0) { // ถ้าสถานะเป็น 1 หรือ 255 (เปิด)
+                el.className = rounded-full ${isRedAlert ? 'led-red-on' : 'led-green-on'};
+                // รักษากรอบขนาดไว้
+                if(elementId.includes('v3') || elementId.includes('v4')) el.classList.add('w-12', 'h-12');
+                else el.classList.add('w-6', 'h-6');
+            } else { // ปิด
+                el.className = rounded-full led-off;
+                if(elementId.includes('v3') || elementId.includes('v4')) el.classList.add('w-12', 'h-12');
+                else el.classList.add('w-6', 'h-6');
+            }
+        }
 
-  <!-- FLAME CARD -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">เซ็นเซอร์ตรวจจับเปลวไฟ</div>
-      <div class="card-badge" id="flameBadge">PIN 14</div>
-    </div>
-    <div class="flame-inner">
-      <div class="flame-block">
-        <div class="flame-circle" id="flameCircle">🔥</div>
-        <div class="flame-lbl" id="flameLbl">ไม่พบเปลวไฟ</div>
-      </div>
-      <div class="f-leds-wrap">
-        <div class="f-leds-tag">STATUS INDICATOR</div>
-        <div class="f-leds">
-          <div class="f-led g" id="fl1"></div>
-          <div class="f-led"   id="fl2"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+        async function fetchBlynkData() {
+            try {
+                const requests = READ_PINS.map(pin => 
+                    fetch(${BLYNK_SERVER}/get?token=${BLYNK_AUTH_TOKEN}&${pin})
+                        .then(res => res.json())
+                        .then(data => ({ pin: pin.toUpperCase(), value: data }))
+                        .catch(() => null)
+                );
 
-  <!-- CONTROLS -->
-  <div class="ctrl-row">
-    <button class="ctrl-btn" id="simBtn" onclick="toggleSim()">⚡ จำลองสัญญาณเตือน</button>
-    <button class="ctrl-btn primary" onclick="resetAll()">↺ รีเซ็ตระบบ</button>
-  </div>
+                const results = await Promise.all(requests);
+                
+                let isFire = false;
 
-  <div class="footer">ESP32 · GPIO 35/32/33/14/26/27/25 · BAUD 115200 · DELAY 500ms</div>
+                results.forEach(result => {
+                    if(!result) return;
+                    let p = result.pin;
+                    let v = result.value;
 
-</div>
+                    // อัปเดต Gauges ด้วยสีนีออน
+                    if (p === 'V0') updateGauge('v0', v, '#0ea5e9'); // Blue
+                    if (p === 'V1') updateGauge('v1', v, '#a855f7'); // Purple
+                    if (p === 'V2') updateGauge('v2', v, '#ec4899'); // Pink
 
-<script>
-const MAX=5000, ARC=151;
-const NRM=['#1e4db7','#4f46e5','#0891b2'];
-const DNG='#dc2626', WRN='#d97706';
-let gas=[0,0,0], thresh=[1500,1500,1500], flame=false, simOn=false, calib=false, tick=0;
+                    // อัปเดต Threshold Text (เฉพาะเมื่อผู้ใช้ไม่ได้กดอยู่)
+                    if (p === 'V11') document.getElementById('lbl-v11').innerText = parseInt(v);
+                    if (p === 'V12') document.getElementById('lbl-v12').innerText = parseInt(v);
+                    if (p === 'V13') document.getElementById('lbl-v13').innerText = parseInt(v);
 
-function setGauge(i,raw){
-  const pct=Math.round(raw/MAX*100);
-  const dash=Math.round(pct/100*ARC);
-  const over=raw>=thresh[i], warn=raw>=thresh[i]*0.7;
-  const col=over?DNG:warn?WRN:NRM[i];
-  document.getElementById('arc'+(i+1)).setAttribute('stroke-dasharray',dash+' '+ARC);
-  document.getElementById('arc'+(i+1)).setAttribute('stroke',col);
-  document.getElementById('gv'+(i+1)).style.color=col;
-  document.getElementById('gv'+(i+1)).innerHTML=pct+'<sub>%</sub>';
-  const dot=document.getElementById('gd'+(i+1));
-  dot.style.background=over?DNG:warn?WRN:'#dde3ee';
-  dot.style.boxShadow=over?'0 0 8px '+DNG:warn?'0 0 8px '+WRN:'none';
-}
+                    // อัปเดตไฟแสดงสถานะ Gas (V5,V7,V9=เขียว / V6,V8,V10=แดง)
+                    if (['V5', 'V7', 'V9'].includes(p)) updateLEDStyle(led-${p.toLowerCase()}, v, false);
+                    if (['V6', 'V8', 'V10'].includes(p)) updateLEDStyle(led-${p.toLowerCase()}, v, true);
 
-function updateAll(){
-  for(let i=0;i<3;i++) setGauge(i,gas[i]);
-  // threshold LEDs
-  for(let i=0;i<3;i++){
-    const ov=gas[i]>=thresh[i];
-    document.getElementById('tla'+(i+1)).className='t-led '+(ov?'':'g');
-    document.getElementById('tlb'+(i+1)).className='t-led '+(ov?'r':'');
-  }
-  // flame
-  const fc=document.getElementById('flameCircle');
-  fc.className='flame-circle'+(flame?' active':'');
-  document.getElementById('flameLbl').textContent=flame?'ตรวจพบเปลวไฟ!':'ไม่พบเปลวไฟ';
-  document.getElementById('fl1').className='f-led '+(flame?'':'g');
-  document.getElementById('fl2').className='f-led '+(flame?'r':'');
-  const fb=document.getElementById('flameBadge');
-  fb.className='card-badge'+(flame?' alarm':'');
-  fb.textContent=flame?'DETECTED':'PIN 14';
-  // global status
-  const alarm=simOn||gas.some((v,i)=>v>=thresh[i])||flame;
-  const pill=document.getElementById('statusPill');
-  const dot=document.getElementById('statusDot');
-  pill.className='status-pill'+(alarm?' danger':'');
-  dot.className='status-dot'+(alarm?' danger':'');
-  document.getElementById('statusTxt').textContent=alarm?'แจ้งเตือน!':'ปกติ';
-  document.getElementById('alertBar').className='alert-bar'+(alarm?' show':'');
-  const gb=document.getElementById('gasBadge');
-  gb.className='card-badge'+(alarm?' alarm':calib?' ok':'');
-  gb.textContent=alarm?'ALARM':calib?'NORMAL':'STANDBY';
-}
+                    // อัปเดตไฟแสดงสถานะ Fire
+                    if (p === 'V3') updateLEDStyle('led-v3', v, false);
+                    if (p === 'V4') {
+                        updateLEDStyle('led-v4', v, true);
+                        if(parseInt(v) > 0) isFire = true;
+                    }
+                });
 
-function chTh(i,d){
-  thresh[i]=Math.max(100,Math.min(5000,thresh[i]+d));
-  document.getElementById('tv'+(i+1)).textContent=thresh[i];
-  updateAll();
-}
+                // จัดการหน้าตา Banner ไฟไหม้
+                const banner = document.getElementById('fire-banner');
+                const fireText = document.getElementById('fire-text');
+                if(isFire) {
+                    banner.classList.add('banner-alert');
+                    fireText.innerHTML = '<span class="text-red-400 font-bold text-lg neon-text-red">🚨 ตรวจพบเปลวไฟ! ระบบแจ้งเตือนกำลังทำงาน</span>';
+                } else {
+                    banner.classList.remove('banner-alert');
+                    fireText.innerText = 'ระบบเฝ้าระวังกำลังทำงาน ปลอดภัย';
+                }
 
-function toggleSim(){
-  simOn=!simOn;
-  const btn=document.getElementById('simBtn');
-  btn.textContent=simOn?'✕ หยุดการจำลอง':'⚡ จำลองสัญญาณเตือน';
-  btn.className='ctrl-btn'+(simOn?' danger':'');
-  if(!simOn){flame=false;updateAll();}
-}
+                // อัปเดตสถานะการเชื่อมต่อ
+                const statusEl = document.getElementById('conn-status');
+                statusEl.innerHTML = <i class="fa-solid fa-link text-green-400"></i> เชื่อมต่อแล้ว • อัปเดตล่าสุด ${new Date().toLocaleTimeString('th-TH')};
+                statusEl.className = "text-xs bg-slate-800 px-4 py-1.5 rounded-full text-green-300 border border-green-900/50 shadow-[0_0_10px_rgba(74,222,128,0.1)]";
 
-function resetAll(){
-  simOn=false; flame=false; gas=[0,0,0];
-  document.getElementById('simBtn').textContent='⚡ จำลองสัญญาณเตือน';
-  document.getElementById('simBtn').className='ctrl-btn';
-  updateAll();
-}
+            } catch (error) {
+                console.error(error);
+                const statusEl = document.getElementById('conn-status');
+                statusEl.innerHTML = <i class="fa-solid fa-link-slash text-red-500"></i> ขาดการเชื่อมต่อ;
+                statusEl.className = "text-xs bg-slate-800 px-4 py-1.5 rounded-full text-red-400 border border-red-900/50";
+            }
+        }
 
-function doTick(){
-  tick++;
-  if(simOn){
-    gas=[1800+Math.round(Math.random()*800),2000+Math.round(Math.random()*600),1700+Math.round(Math.random()*900)];
-    flame=true;
-  } else if(calib){
-    gas[0]=Math.max(0,Math.round(500+Math.sin(tick*0.09)*200+Math.random()*180));
-    gas[1]=Math.max(0,Math.round(620+Math.sin(tick*0.12)*180+Math.random()*150));
-    gas[2]=Math.max(0,Math.round(450+Math.sin(tick*0.07)*220+Math.random()*200));
-    flame=false;
-  }
-  updateAll();
-}
+        // ฟังก์ชันอัปเดต Threshold พร้อม Debounce
+        let timeoutId;
+        function updateThreshold(pin, delta, labelId) {
+            let label = document.getElementById(labelId);
+            let currentVal = parseInt(label.innerText) || 0;
+            let newVal = currentVal + delta;
+            
+            // Limit 0 - 4095
+            if (newVal < 0) newVal = 0;
+            if (newVal > 4095) newVal = 4095;
+            
+            label.innerText = newVal; // แสดงผลทันที
 
-// Clock
-function clk(){
-  const n=new Date();
-  document.getElementById('clock').textContent=
-    String(n.getHours()).padStart(2,'0')+':'+
-    String(n.getMinutes()).padStart(2,'0')+':'+
-    String(n.getSeconds()).padStart(2,'0');
-}
-clk(); setInterval(clk,1000);
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                fetch(${BLYNK_SERVER}/update?token=${BLYNK_AUTH_TOKEN}&${pin}=${newVal})
+                    .then(res => console.log(Updated ${pin} to ${newVal}))
+                    .catch(err => console.error("Update failed", err));
+            }, 500); // รอ 0.5 วิ ค่อยส่ง API เพื่อป้องกันการส่งรัวเกินไป
+        }
 
-// Calibration
-let e=0;
-const cal=setInterval(()=>{
-  e+=80;const p=e/3000;
-  gas=[Math.round(p*500+Math.random()*60),Math.round(p*620+Math.random()*60),Math.round(p*450+Math.random()*60)];
-  updateAll();
-  if(e>=3000){clearInterval(cal);calib=true;setInterval(doTick,600);}
-},80);
-</script>
+        // เริ่มการทำงาน
+        window.onload = () => {
+            fetchBlynkData();
+            setInterval(fetchBlynkData, 2000); // ดึงข้อมูลทุกๆ 2 วินาที
+        };
+    </script>
 </body>
 </html>
